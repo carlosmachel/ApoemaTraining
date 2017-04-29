@@ -18,3 +18,15 @@ library(ggplot2)
 
 qplot(populacao, data = especimes_data, fill = status)
 
+#Clusterização Hierarquica bioma, status, populacao
+
+head(especimes_data)
+
+dist_especimes <- dist(especimes_data[,c(1,3,4)])
+dist_especimes
+
+clust_especimes <- hclust(dist_especimes)
+dendro <- as.dendrogram(clust_especimes)
+par(mar=c(0,0,0,0))
+plot(dendro)
+
