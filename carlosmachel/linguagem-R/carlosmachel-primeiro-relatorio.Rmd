@@ -1,0 +1,123 @@
+---
+title: "Análise de pesquisa"
+author: "Carlos Machel"
+output:
+  html_notebook: default
+  html_document: default
+---
+
+## Garantindo reproducibilidade
+
+```{r seed_definition}
+set.seed(42) # Porque 42 é a resposta para o universo e tudo mais. 
+```
+
+## Criando dataset
+
+Criação aleatória de dataset de tamanho 1000. 
+Os valores numéricos tamanho, envergadura estão em mm.
+
+```{r creating_dataset, dependson='seed_definition'}
+dataset <- data.frame(bioma = sample(c('Cerrado', 'Caatinga', 'Pantanal', 'Amazônia', 'Mata Atlântica', 'Pampa'), size=1000, replace=T),
+                      alimentacao = sample(c('Onivoro', 'Hematofago', 'Frugivoro', 'Carnivoro'), size=1000, replace=T, prob = c(0.4, 0.1, 0.3, 0.2)),
+                      status = sample(c('LC', 'NT', 'VU', 'EN', 'CE', 'EW','EX'), size=1000, replace=T),
+                      populacao = rnorm(1000, mean=300, sd=20),
+                      exemplares = sample.int(100, size=1000, replace=T),
+                      idade = sample.int(20, size=1000, replace=T),
+                      tamanho = sample(1:500, size=1000, replace=T),
+                      envergadura = sample(200:300, size=1000, replace=T))
+```
+
+## Conferindo dataset
+
+```{r, dependson='creating_dataset'}
+head(dataset)
+```
+
+## Armazenando o dataset
+
+```{r saving_dataset, dependson='creating_dataset'}
+write.table(dataset, file='especimes.txt', sep = ',')
+```
+
+
+## Somas e medias das colunas numéricas do dataset usando ??pply
+
+```{r using_apply, dependson='creating_dataset'}
+
+
+apply(dataset[,4:8], FUN=mean, MARGIN=2)
+```
+
+```{r using_sapply, dependson='creating_dataset'}
+
+sapply(dataset[,4:8],FUN=sum)
+```
+
+## Usando split
+```{r using_split, dependson='creating_dataset'}
+bioma_status <- split(dataset$bioma, dataset$status)
+bioma_status
+```
+
+## Plotando os dados
+```{r basic_ploting, dependson='creating_dataset'}
+plot(dataset$bioma, dataset$populacao)
+```
+
+```{r}
+hist(dataset$populacao, main = paste('Histograma Exemplar X População'), xlab='População', ylab='Exemplar')
+```
+
+## Importando os dados 
+
+Refazendo pela leitura do arquivo novamente.
+
+```{r reading_file, dependson='saving_dataset'}
+especimes_data <- read.table('./especimes.txt', sep=',', header=TRUE)
+```
+
+## Adicionando os atributos dependentes
+
+```{r adding_dependent_values, dependson='reading_file'}
+especimes_data['envergaduraXtamanho'] = (especimes_data$envergadura / especimes_data$tamanho) * 100
+especimes_data['exemplaresXidade'] = especimes_data$idade/ especimes_data$exemplares
+```
+
+## Reordenando status factor
+```{r}
+especimes_data['exemplaresXidade'] = especimes_data$idade/ especimes_data$exemplares
+```
+
+## Importando lattice
+```{r}
+library(lattice)
+xyplot(envergadura ~ tamanho | status, data = especimes_data, layout = c(7,1)) # coluna e linhas
+```
+
+```{r, echo=FALSE}
+install.packages('ggplot2')
+library(ggplot2)
+```
+
+```{r}
+qplot(populacao, data = especimes_data, fill = status)
+```
+
+## Conferindo o nome das colunas do dataset
+
+```{r}
+names(especimes_data)
+```
+
+```{r}
+dist_especimes <- dist(especimes_data[,c(7,8,9)])
+head(dist_especimes)
+```
+
+```{r}
+clust_especimes <- hclust(dist_especimes)
+dendro <- as.dendrogram(clust_especimes)
+par(mar=c(0,0,0,0))
+plot(dendro)
+```
